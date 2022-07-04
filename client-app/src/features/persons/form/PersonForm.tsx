@@ -6,12 +6,14 @@ interface Props {
   person: Person | undefined;
   closeForm: () => void;
   createOrEdit: (person: Person) => void;
+  submitting: boolean;
 }
 
 export default function PersonForm({
   person: selectedPerson,
   closeForm,
   createOrEdit,
+  submitting,
 }: Props) {
   const initialState = selectedPerson ?? {
     id: "",
@@ -58,6 +60,7 @@ export default function PersonForm({
         ></Form.Input>
 
         <Form.Input
+          type="date"
           placeholder="Date of birthday"
           value={person.doB}
           name="doB"
@@ -72,10 +75,11 @@ export default function PersonForm({
         ></Form.Input>
 
         <Button
+          loading={submitting}
           floated="right"
           positive
           type="submit"
-          content="Confirm"
+          content="Submit"
         ></Button>
         <Button
           onClick={closeForm}

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, SyntheticEvent } from "react";
 import { Item, Segment, Button } from "semantic-ui-react";
 import { Person } from "../../../app/models/person";
 
@@ -6,13 +6,25 @@ interface Props {
   persons: Person[];
   selectPerson: (id: string) => void;
   deletePerson: (id: string) => void;
+  submitting: boolean;
 }
 
 export default function PersonList({
   persons,
   selectPerson,
   deletePerson,
+  submitting,
 }: Props) {
+  const [target, setTarget] = useState("");
+
+  function handlePersonDelete(
+    e: SyntheticEvent<HTMLButtonElement>,
+    id: string
+  ) {
+    setTarget(e.currentTarget.name);
+    deletePerson(id);
+  }
+
   return (
     <Segment>
       <Item.Group divided>
@@ -32,7 +44,9 @@ export default function PersonList({
                   color="blue"
                 ></Button>
                 <Button
-                  onClick={() => deletePerson(person.id)}
+                  name={person.id}
+                  loading={submitting && target === person.id}
+                  onClick={(e) => handlePersonDelete(e, person.id)}
                   floated="right"
                   content="Delete"
                   color="red"

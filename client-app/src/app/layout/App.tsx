@@ -1,11 +1,11 @@
 import React, { Fragment, useState, useEffect } from "react";
-import axios from "axios";
-// import { Container } from "semantic-ui-react";
 import NavBar from "./NavBar";
 import { Container } from "semantic-ui-react";
 import PersonDashboard from "../../features/persons/dashboard/PersonDashboard";
 import { Person } from "../models/person";
 import { v4 as uuid } from "uuid";
+import agent from "../api/agent";
+import LoadingComponent from "./LoadingComponent";
 
 function App() {
   const [persons, setPersons] = useState<Person[]>([]);
@@ -13,10 +13,18 @@ function App() {
     undefined
   );
   const [editMode, setEditMode] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    axios.get("http://localhost:5000/api/persons").then((response) => {
-      setPersons(response.data);
+    agent.Persons.list().then((response) => {
+      let persons: Person[] = [];
+      response.forEach((person) => {
+        person.doB = person.doB.split("T")[0];
+        persons.push(person);
+      });
+      setPersons(persons);
+      setLoading(false);
     });
   }, []);
 
@@ -38,16 +46,36 @@ function App() {
   }
 
   function handleCreateOrEditPerson(person: Person) {
-    person.id
-      ? setPersons([...persons.filter((x) => x.id !== person.id), person])
-      : setPersons([...persons, { ...person, id: uuid() }]);
-
-    setEditMode(false);
-    setSelectedPerson(person);
+    setSubmitting(true);
+    if (person.id) {
+      agent.Persons.update(person).then(() => {
+        setPersons([...persons.filter((x) => x.id !== person.id), person]);
+        setSelectedPerson(person);
+        setEditMode(false);
+        setSubmitting(false);
+      });
+    } else {
+      person.id = uuid();
+      agent.Persons.create(person).then(() => {
+        setPersons([...persons, person]);
+        setSelectedPerson(person);
+        setEditMode(false);
+        setSubmitting(false);
+      });
+    }
   }
 
   function handleDeletePerson(id: string) {
-    setPersons([...persons.filter((x) => x.id !== id)]);
+    setSubmitting(true);
+
+    agent.Persons.delete(id).then(() => {
+      setPersons([...persons.filter((x) => x.id !== id)]);
+      setSubmitting(false);
+    });
+  }
+
+  if (loading) {
+    return <LoadingComponent content="Loading app"></LoadingComponent>;
   }
 
   return (
@@ -64,6 +92,7 @@ function App() {
           closeForm={handleFormClose}
           createOrEdit={handleCreateOrEditPerson}
           deletePerson={handleDeletePerson}
+          submitting={submitting}
         ></PersonDashboard>
       </Container>
     </>
