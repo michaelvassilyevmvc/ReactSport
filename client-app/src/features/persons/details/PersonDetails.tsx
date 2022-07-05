@@ -1,18 +1,17 @@
-import React from "react";
 import { Card, Image, Button } from "semantic-ui-react";
-import { Person } from "../../../app/models/person";
+import LoadingComponent from "../../../app/layout/LoadingComponent";
+import { useStore } from "../../../app/stores/store";
 
-interface Props {
-  person: Person;
-  cancelSelectPerson: () => void;
-  openForm: (id: string) => void;
-}
+export default function PersonDetails() {
+  const { personStore } = useStore();
+  const {
+    selectedPerson: person,
+    openForm,
+    cancelSelectedPerson,
+  } = personStore;
 
-export default function PersonDetails({
-  person,
-  cancelSelectPerson,
-  openForm,
-}: Props) {
+  if (!person) return <LoadingComponent></LoadingComponent>;
+
   return (
     <Card fluid>
       <Image src={`/assets/person/no-photo.png`}></Image>
@@ -34,7 +33,7 @@ export default function PersonDetails({
             content="Edit"
           ></Button>
           <Button
-            onClick={cancelSelectPerson}
+            onClick={cancelSelectedPerson}
             basic
             color="grey"
             content="Cancel"

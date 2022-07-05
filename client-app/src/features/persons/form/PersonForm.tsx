@@ -1,33 +1,27 @@
-import React, { ChangeEvent, useState } from "react";
+import { ChangeEvent, useState } from "react";
 import { Form, Segment, Button } from "semantic-ui-react";
-import { Person } from "../../../app/models/person";
+import { useStore } from "../../../app/stores/store";
+import { observer } from "mobx-react-lite";
 
-interface Props {
-  person: Person | undefined;
-  closeForm: () => void;
-  createOrEdit: (person: Person) => void;
-  submitting: boolean;
-}
+export default observer(function PersonForm() {
+  const { personStore } = useStore();
 
-export default function PersonForm({
-  person: selectedPerson,
-  closeForm,
-  createOrEdit,
-  submitting,
-}: Props) {
+  const { selectedPerson, closeForm, createPerson, updatePerson, loading } =
+    personStore;
+
   const initialState = selectedPerson ?? {
     id: "",
-    fName: "",
-    mName: "",
-    lName: "",
     doB: "",
+    fName: "",
+    lName: "",
+    mName: "",
     iin: "",
   };
 
   const [person, setPerson] = useState(initialState);
 
   function handleSubmit() {
-    createOrEdit(person);
+    person.id ? updatePerson(person) : createPerson(person);
   }
 
   function handleInputChange(event: ChangeEvent<HTMLInputElement>) {
@@ -75,7 +69,7 @@ export default function PersonForm({
         ></Form.Input>
 
         <Button
-          loading={submitting}
+          loading={loading}
           floated="right"
           positive
           type="submit"
@@ -90,4 +84,4 @@ export default function PersonForm({
       </Form>
     </Segment>
   );
-}
+});
