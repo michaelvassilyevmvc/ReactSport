@@ -2,6 +2,7 @@ import { observer } from "mobx-react-lite";
 import React, { useState, SyntheticEvent } from "react";
 import { Item, Segment, Button } from "semantic-ui-react";
 import { useStore } from "../../../app/stores/store";
+import {Link} from 'react-router-dom';
 
 export default observer(function PersonList() {
   const { personStore } = useStore();
@@ -29,7 +30,8 @@ export default observer(function PersonList() {
               <Item.Description>{person.iin}</Item.Description>
               <Item.Extra>
                 <Button
-                  onClick={() => personStore.selectPerson(person.id)}
+                  as={Link}
+                  to={`/persons/${person.id}`}
                   floated="right"
                   content="View"
                   color="blue"

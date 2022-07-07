@@ -1,33 +1,54 @@
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useState, useEffect } from "react";
 import { Form, Segment, Button } from "semantic-ui-react";
 import { useStore } from "../../../app/stores/store";
 import { observer } from "mobx-react-lite";
+import { Link, useHistory, useParams } from "react-router-dom";
+import { v4 as uuid } from "uuid";
+import LoadingComponent from "../../../app/layout/LoadingComponent";
 
 export default observer(function PersonForm() {
+  const history = useHistory();
   const { personStore } = useStore();
+  const { id } = useParams<{ id: string }>();
 
-  const { selectedPerson, closeForm, createPerson, updatePerson, loading } =
+  const { loadPerson, loadingInitial, createPerson, updatePerson, loading } =
     personStore;
 
-  const initialState = selectedPerson ?? {
+  const [person, setPerson] = useState({
     id: "",
     doB: "",
     fName: "",
     lName: "",
     mName: "",
     iin: "",
-  };
+  });
 
-  const [person, setPerson] = useState(initialState);
+  useEffect(() => {
+    if (id) loadPerson(id).then((person) => setPerson(person!));
+  }, [id, loadPerson]);
 
   function handleSubmit() {
-    person.id ? updatePerson(person) : createPerson(person);
+    if (person.id.length === 0) {
+      let newPerson = {
+        ...person,
+        id: uuid(),
+      };
+
+      createPerson(newPerson).then(() =>
+        history.push(`/persons/${newPerson.id}`)
+      );
+    } else {
+      updatePerson(person).then(() => history.push(`/persons/${person.id}`));
+    }
   }
 
   function handleInputChange(event: ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
     setPerson({ ...person, [name]: value });
   }
+
+  if (loadingInitial)
+    return <LoadingComponent content="Loading person..."></LoadingComponent>;
 
   return (
     <Segment clearing>
@@ -76,7 +97,8 @@ export default observer(function PersonForm() {
           content="Submit"
         ></Button>
         <Button
-          onClick={closeForm}
+          as={Link}
+          to="/persons"
           floated="right"
           type="button"
           content="Cancel"

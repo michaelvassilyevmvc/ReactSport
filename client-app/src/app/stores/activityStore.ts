@@ -1,7 +1,6 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import agent from '../api/agent';
 import { Person } from '../models/person';
-import { v4 as uuid } from 'uuid';
 
 export default class PersonStore {
     persons: Person[] = [];
@@ -19,19 +18,49 @@ export default class PersonStore {
         return Array.from(this.personRegistry.values()).sort((a, b) => Date.parse(a.doB) - Date.parse(b.doB));
     }
 
-    setLoadingInitial = (state: boolean) => { this.loadingInitial = state; }
+    loadPerson = async (id: string) => {
+        let person = this.getPerson(id);
+        if (person) {
+            this.selectedPerson = person;
+            return person;
+        }
+        else {
+            this.loadingInitial = true;
+            try {
+                person = await agent.Persons.details(id);
+                this.setPerson(person);
+                runInAction(() => {
+                    this.selectedPerson = person;
+                })
+                this.setLoadingInitial(false);
+                return person;
+            } catch (error) {
+                console.log(error);
+                this.setLoadingInitial(false);
+            }
+        }
+    }
 
-    selectPerson = (id: string) => { this.selectedPerson = this.personRegistry.get(id); }
+    private setPerson = (person: Person) => {
+        person.doB = person.doB.split('T')[0];
+        this.personRegistry.set(person.id, person);
+    }
+
+    private getPerson = (id: string) => {
+        return this.personRegistry.get(id);
+    }
+
+    setLoadingInitial = (state: boolean) => { this.loadingInitial = state; }
 
     cancelSelectedPerson = () => { this.selectedPerson = undefined; }
 
     loadPersons = async () => {
+        this.loadingInitial = true;
         try {
             this.persons = await agent.Persons.list();
 
             this.persons.forEach((person) => {
-                person.doB = person.doB.split("T")[0];
-                this.personRegistry.set(person.id, person);
+                this.setPerson(person);
             });
             this.setLoadingInitial(false);
         } catch (error) {
@@ -40,16 +69,8 @@ export default class PersonStore {
         }
     }
 
-    openForm = (id?: string) => {
-        id ? this.selectPerson(id) : this.cancelSelectedPerson();
-        this.editMode = true;
-    }
-
-    closeForm = () => { this.editMode = false; }
-
     createPerson = async (person: Person) => {
         this.loading = true;
-        person.id = uuid();
 
         try {
             await agent.Persons.create(person);
@@ -89,7 +110,6 @@ export default class PersonStore {
             await agent.Persons.delete(id);
             runInAction(() => {
                 this.personRegistry.delete(id);
-                if (this.selectedPerson?.id === id) this.cancelSelectedPerson();
                 this.loading = false;
             })
         } catch (error) {

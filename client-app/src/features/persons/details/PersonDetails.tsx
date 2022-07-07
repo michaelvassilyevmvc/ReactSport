@@ -1,20 +1,27 @@
 import { Card, Image, Button } from "semantic-ui-react";
 import LoadingComponent from "../../../app/layout/LoadingComponent";
 import { useStore } from "../../../app/stores/store";
+import { observer } from "mobx-react-lite";
+import React, { useEffect } from "react";
+import { Link, useParams } from "react-router-dom";
 
-export default function PersonDetails() {
+export default observer(function PersonDetails() {
+  const { id } = useParams<{ id: string }>();
   const { personStore } = useStore();
-  const {
-    selectedPerson: person,
-    openForm,
-    cancelSelectedPerson,
-  } = personStore;
+  const { selectedPerson: person, loadPerson, loadingInitial } = personStore;
 
-  if (!person) return <LoadingComponent></LoadingComponent>;
+  useEffect(() => {
+    if (id) loadPerson(id);
+  }, [id, loadPerson]);
+
+  if (loadingInitial || !person) return <LoadingComponent></LoadingComponent>;
 
   return (
     <Card fluid>
-      <Image src={`/assets/person/no-photo.png`}></Image>
+      <Image
+        src={`/assets/person/no-photo.png`}
+        style={{ width: "500px", margin: "0 auto" }}
+      ></Image>
       <Card.Content>
         <Card.Header>
           {person.lName} {person.fName} {person.mName}
@@ -27,13 +34,15 @@ export default function PersonDetails() {
       <Card.Content extra>
         <Button.Group widths="2">
           <Button
-            onClick={() => openForm(person.id)}
+            as={Link}
+            to={`/manage/${person.id}`}
             basic
             color="blue"
             content="Edit"
           ></Button>
           <Button
-            onClick={cancelSelectedPerson}
+            as={Link}
+            to="/persons"
             basic
             color="grey"
             content="Cancel"
@@ -42,4 +51,4 @@ export default function PersonDetails() {
       </Card.Content>
     </Card>
   );
-}
+});
