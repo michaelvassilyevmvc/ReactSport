@@ -1,37 +1,54 @@
-import React, { ChangeEvent, useState } from "react";
+import { ChangeEvent, useState, useEffect } from "react";
 import { Form, Segment, Button } from "semantic-ui-react";
-import { Person } from "../../../app/models/person";
+import { useStore } from "../../../app/stores/store";
+import { observer } from "mobx-react-lite";
+import { Link, useHistory, useParams } from "react-router-dom";
+import { v4 as uuid } from "uuid";
+import LoadingComponent from "../../../app/layout/LoadingComponent";
 
-interface Props {
-  person: Person | undefined;
-  closeForm: () => void;
-  createOrEdit: (person: Person) => void;
-}
+export default observer(function PersonForm() {
+  const history = useHistory();
+  const { personStore } = useStore();
+  const { id } = useParams<{ id: string }>();
 
-export default function PersonForm({
-  person: selectedPerson,
-  closeForm,
-  createOrEdit,
-}: Props) {
-  const initialState = selectedPerson ?? {
+  const { loadPerson, loadingInitial, createPerson, updatePerson, loading } =
+    personStore;
+
+  const [person, setPerson] = useState({
     id: "",
-    fName: "",
-    mName: "",
-    lName: "",
     doB: "",
+    fName: "",
+    lName: "",
+    mName: "",
     iin: "",
-  };
+  });
 
-  const [person, setPerson] = useState(initialState);
+  useEffect(() => {
+    if (id) loadPerson(id).then((person) => setPerson(person!));
+  }, [id, loadPerson]);
 
   function handleSubmit() {
-    createOrEdit(person);
+    if (person.id.length === 0) {
+      let newPerson = {
+        ...person,
+        id: uuid(),
+      };
+
+      createPerson(newPerson).then(() =>
+        history.push(`/persons/${newPerson.id}`)
+      );
+    } else {
+      updatePerson(person).then(() => history.push(`/persons/${person.id}`));
+    }
   }
 
   function handleInputChange(event: ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
     setPerson({ ...person, [name]: value });
   }
+
+  if (loadingInitial)
+    return <LoadingComponent content="Loading person..."></LoadingComponent>;
 
   return (
     <Segment clearing>
@@ -58,6 +75,7 @@ export default function PersonForm({
         ></Form.Input>
 
         <Form.Input
+          type="date"
           placeholder="Date of birthday"
           value={person.doB}
           name="doB"
@@ -72,13 +90,15 @@ export default function PersonForm({
         ></Form.Input>
 
         <Button
+          loading={loading}
           floated="right"
           positive
           type="submit"
-          content="Confirm"
+          content="Submit"
         ></Button>
         <Button
-          onClick={closeForm}
+          as={Link}
+          to="/persons"
           floated="right"
           type="button"
           content="Cancel"
@@ -86,4 +106,4 @@ export default function PersonForm({
       </Form>
     </Segment>
   );
-}
+});

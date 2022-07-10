@@ -1,58 +1,30 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { observer } from "mobx-react-lite";
 import { Grid } from "semantic-ui-react";
-import { Person } from "../../../app/models/person";
-import PersonDetails from "../details/PersonDetails";
-import PersonForm from "../form/PersonForm";
+import { useStore } from "../../../app/stores/store";
 import PersonList from "./PersonList";
+import LoadingComponent from "../../../app/layout/LoadingComponent";
 
-interface Props {
-  persons: Person[];
-  selectedPerson: Person | undefined;
-  selectPerson: (id: string) => void;
-  cancelSelectPerson: () => void;
-  editMode: boolean;
-  openForm: (id: string) => void;
-  closeForm: () => void;
-  createOrEdit: (person: Person) => void;
-  deletePerson: (id: string) => void;
-}
+export default observer(function PersonDashboard() {
+  const { personStore } = useStore();
+  const { loadPersons, personRegistry } = personStore;
 
-export default function PersonDashboard({
-  persons,
-  selectedPerson,
-  selectPerson,
-  cancelSelectPerson,
-  editMode,
-  openForm,
-  closeForm,
-  createOrEdit,
-  deletePerson,
-}: Props) {
+  useEffect(() => {
+    if (personRegistry.size <= 1) loadPersons();
+  }, [personRegistry.size, loadPersons]);
+
+  if (personStore.loadingInitial) {
+    return <LoadingComponent content="Loading app"></LoadingComponent>;
+  }
+
   return (
     <Grid>
       <Grid.Column width="10">
-        <PersonList
-          persons={persons}
-          selectPerson={selectPerson}
-          deletePerson={deletePerson}
-        ></PersonList>
+        <PersonList></PersonList>
       </Grid.Column>
       <Grid.Column width="6">
-        {selectedPerson && !editMode && (
-          <PersonDetails
-            person={selectedPerson}
-            cancelSelectPerson={cancelSelectPerson}
-            openForm={openForm}
-          ></PersonDetails>
-        )}
-        {editMode && (
-          <PersonForm
-            closeForm={closeForm}
-            person={selectedPerson}
-            createOrEdit={createOrEdit}
-          ></PersonForm>
-        )}
+        <h2>Person filters</h2>
       </Grid.Column>
     </Grid>
   );
-}
+});
