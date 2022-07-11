@@ -14,6 +14,14 @@ export default class PersonStore {
         makeAutoObservable(this);
     }
 
+    get groupedPersons(){
+        return Object.entries(this.personsByDate.reduce((persons, person) => {
+            const date = person.doB;
+            persons[date] = persons[date] ? [...persons[date],person] : [person];
+            return persons;
+        }, {} as {[key:string]:Person[]}))
+    }
+
     get personsByDate() {
         return Array.from(this.personRegistry.values()).sort((a, b) => Date.parse(a.doB) - Date.parse(b.doB));
     }

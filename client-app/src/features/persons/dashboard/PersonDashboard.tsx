@@ -4,6 +4,7 @@ import { Grid } from "semantic-ui-react";
 import { useStore } from "../../../app/stores/store";
 import PersonList from "./PersonList";
 import LoadingComponent from "../../../app/layout/LoadingComponent";
+import PersonFilters from "./PersonFilters";
 
 export default observer(function PersonDashboard() {
   const { personStore } = useStore();
@@ -23,7 +24,7 @@ export default observer(function PersonDashboard() {
         <PersonList></PersonList>
       </Grid.Column>
       <Grid.Column width="6">
-        <h2>Person filters</h2>
+        <PersonFilters></PersonFilters>
       </Grid.Column>
     </Grid>
   );
